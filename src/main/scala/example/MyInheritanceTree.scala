@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo, JsonTypeName}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -18,7 +18,8 @@ import example.TRoot.mapper
 @JsonSubTypes(Array(
   new Type(value = classOf[A]),
   new Type(value = classOf[B]),
-  new Type(value = classOf[C])
+  new Type(value = classOf[C]),
+  new Type(value = classOf[D], name="dog") //name="dog" here will make sure when JsonUtils.fromJson see "type":"dog", it will make a D object.
 ))
 sealed trait TRoot {
   val rootString: String
@@ -28,6 +29,8 @@ sealed trait TRoot {
   }
 }
 
+
+
 object TRoot {
   private val mapper = new ObjectMapper() with ScalaObjectMapper
   mapper.registerModule(DefaultScalaModule)
@@ -36,6 +39,7 @@ object TRoot {
   mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
   mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 
+  //this private will block external access to this method outside of package, so yes TRoot.fromJson won't work in sbt console
   private[example] def fromJson[T <: TRoot](json: String): T = {
     // Due to type erasure, need to provide
     // an instance of TypeReference with all the needed Type information.
@@ -133,3 +137,20 @@ object C {
     TRoot.fromJson[C](json)
   }
 }
+
+// example for polymorphic type handling annotations
+// inspired by java example here https://www.baeldung.com/jackson-annotations, search for "Jackson Polymorphic"
+final case class D(
+                    override val rootString: String,
+                    override val l1String: String
+                  ) extends TLevelOne
+
+//JsonTypeName with "dog" will make sure toJson output "type":"dog"
+@JsonTypeName("dog")
+object D {
+  def fromJson(json: String): D = {
+    TRoot.fromJson[D](json)
+  }
+}
+
+

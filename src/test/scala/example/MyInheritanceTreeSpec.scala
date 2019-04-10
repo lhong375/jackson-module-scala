@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.FlatSpec
+import example.JsonUtils._
 
 class MyInheritanceTreeSpec extends FlatSpec with LazyLogging {
 
@@ -99,5 +100,69 @@ class MyInheritanceTreeSpec extends FlatSpec with LazyLogging {
     )
     val a: C = C.fromJson(e.toJson)
     assertResult(e)(a)
+  }
+
+  // example for polymorphic type handling annotations
+  // inspired by java example here https://www.baeldung.com/jackson-annotations, search for "Jackson Polymorphic"
+  it should "deserialize sequence of different child extension objects of TRoot" in {
+    val a: A = A(
+      rootString = "root=a"
+    )
+    val strA = a.toJson
+    val b: B = B(
+      rootString = "root=b",
+      l1String = "l1=b"
+    )
+    val strB = b.toJson
+    val strSeqAAB = "["+strA+","+strA+","+strB+"]"
+
+    val trSeq = fromJson[Seq[TRoot]](strSeqAAB)
+
+    assert(trSeq.size === 3)
+    assert(trSeq.head.isInstanceOf[A])
+    assert(trSeq.last.isInstanceOf[B])
+  }
+
+  it should "fromJson inside each class should block you from deserialize from wrong type str" in {
+    val a: A = A(
+      rootString = "root=a"
+    )
+    val strA = a.toJson
+
+    //example.A cannot be cast to example.B
+    assertThrows[ClassCastException] {
+      B.fromJson(strA)
+    }
+  }
+
+  it should "JsonUtils will also block you from deserialize from wrong type str " in {
+    val a: A = A(
+      rootString = "root=a"
+    )
+    val strA = a.toJson
+
+    //Class example.A not subtype of [simple type, class example.B]
+    assertThrows[IllegalArgumentException] {
+      fromJson[B](strA)
+    }
+  }
+
+  it should "we can also over-write the name for class/object with JsonTypeName, like 'dog' for D" in {
+    val d: D = D(
+      rootString = "root=d",
+      l1String = "l1=d"
+    )
+    val dJson = d.toJson;
+
+    println(dJson) //notice the "type":"dog" in the output
+
+
+    assertResult(D.fromJson(dJson))(d)
+
+    //JsonUtils can figure out which type to cast this too
+    val res = fromJson[TRoot](dJson)
+    assert(res.isInstanceOf[D])
+
+
   }
 }
