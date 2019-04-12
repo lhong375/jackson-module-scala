@@ -37,7 +37,7 @@ val badscjson=s"""{"type":"string","value":"a","valueSeq":["a","b",100]}"""
 //will this work ?
 val badsc =  JsonUtils.fromJson[Root](badscjson)
 
-//yes, it give us StringChild(a,List(a, b, 100)), then what's with 100 in a list of string ?
+//magically, it give us StringChild(a,List(a, b, 100)), then what's with 100 in a list of string ?
 badsc.valueSeq  //it become Seq[Any]
 badsc.valueSeq.last //Any
 
@@ -62,7 +62,7 @@ val badfc1 = FloatChild.fromJson(badfcjson)
 badfc1.valueSeq
 //res1: Seq[Int] = List(a, b, 1.1)
 
-//it error out when you try to get it.
+//it will error out when you try to get it.
 badfc1.valueSeq.last
 //java.lang.ClassCastException: java.lang.Double cannot be cast to java.lang.Integer
 
@@ -76,7 +76,7 @@ val badicjson=s"""{"type":"int","value":1,"valueSeq":["a",2,3]}"""
 //will this work ?
 val badic =  JsonUtils.fromJson[Root](badicjson)
 
-//great, above error out : InvalidFormatException: Cannot deserialize value of type `java.lang.Integer` from String "a": not a valid Integer value
+//finally, above error out : InvalidFormatException: Cannot deserialize value of type `java.lang.Integer` from String "a": not a valid Integer value
 
  */
 
@@ -127,6 +127,7 @@ object StringChild {
 
 @JsonTypeName("int")
 final case class IntChild(override val value: Int,
+                         //This is necessary to force type check o valueSeq
                           @JsonDeserialize(contentAs = classOf[java.lang.Integer])
                           override val valueSeq: Seq[Int]) extends Root
 
