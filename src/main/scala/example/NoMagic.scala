@@ -10,8 +10,12 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 
-/*  sbt console
-:paste then control+D
+/*
+This example has 1 root trait, 3 child trait (Int/Float/String) extends the root one.
+Use Jackson to
+
+`sbt console`
+tip: `:paste` to get into paste mode, then control+D to get out
 
 import example._
 val sc = StringChild(value="a", valueSeq=Seq("a","b","c"))
@@ -27,26 +31,27 @@ JsonUtils.fromJson[StringChild](scjson)
 //this works because we register name="string" with @JsonSubTypes
 JsonUtils.fromJson[Root](scjson)
 
-//this will error out with java.lang.IllegalArgumentException, which is good
+//cast StringChild json string to IntChild, will error out with java.lang.IllegalArgumentException
 JsonUtils.fromJson[IntChild](scjson)
 
-//now let's have some fun
-//notice the 100 in a suppose to be string seq
+//////////////////// Time to have some fun ////////////////////
+
+//notice a number 100 in a suppose-to-be string seq
 val badscjson=s"""{"type":"string","value":"a","valueSeq":["a","b",100]}"""
 
 //will this work ?
 val badsc =  JsonUtils.fromJson[Root](badscjson)
 
-//magically, it give us StringChild(a,List(a, b, 100)), then what's with 100 in a list of string ?
-badsc.valueSeq  //it become Seq[Any]
+//It give us StringChild(a,List(a, b, 100)), then what's the type of 100 in a list of string ?
+badsc.valueSeq  //it become Seq[Any], type is GONE
 badsc.valueSeq.last //Any
 
-//how about specify StringChild instead of Root?
+//how about ask it to decode into StringChild instead of Root?
 val badsc2 =  JsonUtils.fromJson[StringChild](badscjson)
-badsc2.valueSeq //this keep it a Seq[String]
-badsc2.valueSeq.last //String = 100, forcecast
+badsc2.valueSeq //at least we get Seq[String]
+badsc2.valueSeq.last //String = 100
 
-//how about the fromJson we defined in Root?
+//Guess cast Int into String is somewhat reasonable (?), how about String to Float ?
 
 val badfcjson=s"""{"type":"float","value":1.1,"valueSeq":["a","b",1.1]}"""
 //badfcjson: String = {"type":"float","value":1.1,"valueSeq":["a","b",1.1]}
@@ -58,17 +63,17 @@ FloatChild.fromJson(badfcjson)
 val badfc1 = FloatChild.fromJson(badfcjson)
 //badfc1: example.FloatChild = FloatChild(1.1,List(a, b, 1.1))
 
-//a seq of Int ?
+//A seq of Float with 2 string in it?
 badfc1.valueSeq
-//res1: Seq[Int] = List(a, b, 1.1)
+//res1: Seq[Float] = List(a, b, 1.1)
 
-//it will error out when you try to get it.
+//But ... it will error out when you try to get it.
 badfc1.valueSeq.last
-//java.lang.ClassCastException: java.lang.Double cannot be cast to java.lang.Integer
+//java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Float
 
 //So, same thing.
 
-//wtf
+////////////////////////////////// IntChild has the fix /////////////////////////////
 
 //notice the @JsonDeserialize(contentAs = classOf[java.lang.Integer]) in IntChild
 val badicjson=s"""{"type":"int","value":1,"valueSeq":["a",2,3]}"""
@@ -78,7 +83,7 @@ val badic =  JsonUtils.fromJson[Root](badicjson)
 
 //finally, above error out : InvalidFormatException: Cannot deserialize value of type `java.lang.Integer` from String "a": not a valid Integer value
 
- */
+*/
 
 @JsonTypeInfo(use = Id.NAME,
   include = JsonTypeInfo.As.PROPERTY,
@@ -139,7 +144,7 @@ object IntChild {
 
 @JsonTypeName("float")
 final case class FloatChild(override val value: Float,
-                          override val valueSeq: Seq[Int]) extends Root
+                          override val valueSeq: Seq[Float]) extends Root
 
 object FloatChild {
   def fromJson(json: String): FloatChild = {
