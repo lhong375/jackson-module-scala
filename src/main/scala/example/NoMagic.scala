@@ -11,8 +11,17 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 
 /*
+
 This example has 1 root trait, 3 child trait (Int/Float/String) extends the root one.
-Use Jackson to
+root trait define a Seq of generic type, each child trait override it with a type int/float/string.
+
+Annotation JsonTypeInfo/JsonSubTypes/JsonTypeName ensure the proper type of child trait is created during decoding.
+All 3 child traits are properly hook up.
+
+For generic type however, only the Int child one is properly configured. After trying out "have some fun" part, you will see what/why
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\ CODE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 
 `sbt console`
 tip: `:paste` to get into paste mode, then control+D to get out
@@ -59,7 +68,7 @@ val badfcjson=s"""{"type":"float","value":1.1,"valueSeq":["a","b",1.1]}"""
 FloatChild.fromJson(badfcjson)
 //res0: example.FloatChild = FloatChild(1.1,List(a, b, 1.1))
 
-//will this work ?
+//Will this work ?
 val badfc1 = FloatChild.fromJson(badfcjson)
 //badfc1: example.FloatChild = FloatChild(1.1,List(a, b, 1.1))
 
