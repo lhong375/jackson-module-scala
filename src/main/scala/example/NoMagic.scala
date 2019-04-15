@@ -1,16 +1,7 @@
-package example
-
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo, JsonTypeName}
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-
 /*
+
+medium post for this:
+https://medium.com/@linda0511ny/polymorphism-and-generic-type-with-jackson-scala-5f79872b1d23
 
 This example has 1 root trait, 3 child trait (Int/Float/String) extends the root one.
 root trait define a Seq of generic type, each child trait override it with a type int/float/string.
@@ -93,6 +84,20 @@ val badic =  JsonUtils.fromJson[Root](badicjson)
 //finally, above error out : InvalidFormatException: Cannot deserialize value of type `java.lang.Integer` from String "a": not a valid Integer value
 
 */
+
+package example
+
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo, JsonTypeName}
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
+import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+
+
 
 @JsonTypeInfo(use = Id.NAME,
   include = JsonTypeInfo.As.PROPERTY,
